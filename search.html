@@ -1,0 +1,64 @@
+<!doctype html>
+<html ng-app="Search">
+<head>
+	<meta charset="utf-8" />
+	<title>PDOne Search Service</title>
+</head>
+<body ng-controller="SearchController">
+	<ul>
+		<li ng-repeat="result in results">
+			{{ result.desc }}
+		</li>
+	</ul>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
+   <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript">
+		var app = angular.module( "Search", [] );
+		app.controller(
+			"SearchController",
+			function( $scope, searchService ) {
+				$scope.results = [];
+				searchService.getResults()
+					.then(
+						function( results ) {
+							$scope.results = results.results;
+						}
+				);
+			}
+		);
+		app.service(
+			"searchService",
+			function( $http, $q ) {
+				return({
+					getResults: getResults
+				});
+
+				function getResults() {
+					var request = $http({
+						method: "get",
+						url: "javascript/searchresults.js"
+						//url : "http://tmb_rpc.qa.pdone.com/search_processor.php?mode=SEARCH&page=1&phrase=e&page_length=100&type=news"
+					});
+					return( request.then( handleSuccess, handleError ) );
+				}
+
+				function handleError( response ) {
+					if (
+						! angular.isObject( response.data ) ||
+						! response.data.message
+						) {
+						return( $q.reject( "An unknown error occurred." ) );
+					}
+
+					return( $q.reject( response.data.message ) );
+				}
+
+				function handleSuccess( response ) {
+					return( response.data );
+				}
+			}
+		);
+	</script>
+</body>
+</html>
