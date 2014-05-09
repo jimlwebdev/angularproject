@@ -4,8 +4,13 @@
 	<meta charset="utf-8" />
 	<title>PDOne Search Service</title>
 </head>
-<body ng-controller="SearchController">
-	<ul>
+<body>
+	<ul ng-controller="searchPeopleController">
+		<li ng-repeat="result in results">
+			{{ result.firstName }} {{ result.lastName }}, {{ result.id }}
+		</li>
+	</ul>
+	<ul ng-controller="searchNewsController">
 		<li ng-repeat="result in results">
 			{{ result.desc }}
 		</li>
@@ -14,51 +19,99 @@
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
    <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 	<script type="text/javascript">
+						
 		var app = angular.module( "Search", [] );
-		app.controller(
-			"SearchController",
-			function( $scope, searchService ) {
-				$scope.results = [];
-				searchService.getResults()
-					.then(
-						function( results ) {
-							$scope.results = results.results;
-						}
-				);
-			}
-		);
-		app.service(
-			"searchService",
-			function( $http, $q ) {
-				return({
-					getResults: getResults
-				});
-
-				function getResults() {
-					var request = $http({
-						method: "get",
-						url: "javascript/searchresults.js"
-						//url : "http://tmb_rpc.qa.pdone.com/search_processor.php?mode=SEARCH&page=1&phrase=e&page_length=100&type=news"
-					});
-					return( request.then( handleSuccess, handleError ) );
-				}
-
-				function handleError( response ) {
-					if (
-						! angular.isObject( response.data ) ||
-						! response.data.message
-						) {
-						return( $q.reject( "An unknown error occurred." ) );
+		
+		app.controller("searchNewsController",searchNewsController);
+		
+		function searchNewsController( $scope, searchNewsService ) {
+			$scope.results = [];
+			searchNewsService.getResults()
+				.then(
+					function( results ) {
+						$scope.results = results.results;
 					}
+				);
+		}
+			
+		app.service("searchNewsService",searchNewsService);
 
-					return( $q.reject( response.data.message ) );
+		app.controller("searchPeopleController",searchPeopleController);
+		
+		function searchPeopleController( $scope, searchPeopleService ) {
+			$scope.results = [];
+			searchPeopleService.getResults()
+				.then(
+					function( results ) {
+						$scope.results = results.results;
+					}
+				);
+		}
+			
+		app.service("searchPeopleService",searchPeopleService);
+		
+		
+		var where = "http://tmb_rpc.qa.pdone.com/",
+		    search = "search_processor.php",
+		    searchNewsParams = {
+				"mode":"SEARCH",
+				"page":"1",
+				"phrase":"e",
+				"page_length":"100",
+				"type":"news",
+				"callback":"JSON_CALLBACK"
+			},
+		    searchPeopleParams = {
+				"mode":"SEARCH",
+				"page":"1",
+				"phrase":"e",
+				"page_length":"100",
+				"type":"people",
+				"callback":"JSON_CALLBACK"
+			},
+			newsResultsHttp = {
+				method: "jsonp",
+				responseType: "text",
+				params : searchNewsParams,
+				timeout : 10000,
+				url : where+search
+			},
+			peopleResultsHttp = {
+				method: "jsonp",
+				responseType: "text",
+				params : searchPeopleParams,
+				timeout : 10000,
+				url : where+search
+			};
+		
+		function searchNewsService( $http, $q ) {
+			return({
+				getResults: function() {
+					return( $http(newsResultsHttp).then( handleSuccess, handleError ) );
 				}
-
-				function handleSuccess( response ) {
-					return( response.data );
+			});
+		}
+		function searchPeopleService( $http, $q ) {
+			return({
+				getResults: function() {
+					return( $http(peopleResultsHttp).then( handleSuccess, handleError ) );
 				}
+			});
+		}
+		function handleError( response ) {
+			if (
+				! angular.isObject( response.data ) ||
+				! response.data.message
+				) {
+				return( $q.reject( "An unknown error occurred." ) );
 			}
-		);
+
+			return( $q.reject( response.data.message ) );
+		}
+
+		function handleSuccess( response ) {
+			return( response.data );
+		}
 	</script>
 </body>
 </html>
