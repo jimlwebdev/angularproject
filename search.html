@@ -5,26 +5,44 @@
 	<title>PDOne Search Service</title>
 </head>
 <body>
+	<div>
+     <form>
+		<input type="search" name="srchphrase" id="srchphrase"/>
+		<button type="button" id="srchbtn" name="srchbtn" ng-click="search()">search</button>
+     </form>
+	</div>
+	<p>
 	<ul ng-controller="searchPeopleController">
-		<li ng-repeat="result in results">
-			{{ result.firstName }} {{ result.lastName }}, {{ result.id }}
-		</li>
+		<li ng-repeat="result in results" search-people></li>
 	</ul>
 	<ul ng-controller="searchNewsController">
-		<li ng-repeat="result in results">
-			{{ result.desc }}
-		</li>
+		<li ng-repeat="result in results" search-news></li>
 	</ul>
+	</p>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
-   <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 	<script type="text/javascript">
-						
-		var app = angular.module( "Search", [] );
+		angular.module("Search",[])
+		.directive('searchPeople',searchPeopleDirective)
+		.directive('searchNews',searchNewsDirective)
+		.controller("searchNewsController",searchNewsController)
+		.service("searchNewsService",searchNewsService)
+		.controller("searchPeopleController",searchPeopleController)
+		.service("searchPeopleService",searchPeopleService);
+
+		function searchPeopleDirective(){
+			return {
+				template: '{{ result.firstName }} {{ result.lastName }}, {{ result.id }}'
+			};
+		}
+		function searchNewsDirective(){
+			return {
+				template: '{{ result.desc }}'
+			};
+		}
 		
-		app.controller("searchNewsController",searchNewsController);
-		
-		function searchNewsController( $scope, searchNewsService ) {
+		function searchNewsController( $scope, searchNewsService ){
 			$scope.results = [];
 			searchNewsService.getResults()
 				.then(
@@ -33,12 +51,8 @@
 					}
 				);
 		}
-			
-		app.service("searchNewsService",searchNewsService);
-
-		app.controller("searchPeopleController",searchPeopleController);
 		
-		function searchPeopleController( $scope, searchPeopleService ) {
+		function searchPeopleController( $scope, searchPeopleService ){
 			$scope.results = [];
 			searchPeopleService.getResults()
 				.then(
@@ -47,58 +61,39 @@
 					}
 				);
 		}
-			
-		app.service("searchPeopleService",searchPeopleService);
 		
+		function configParams(page,phrase,type){
+			var rtnval = {"mode":"SEARCH","page":page,"phrase":phrase,"type":type,"page_length":"100","callback":"JSON_CALLBACK"};
+			return rtnval;
+		}
+		
+		function configHttp(location,params){
+			var rtnval = {"method":"jsonp","responseType":"text","timeout":"10000","url":location,"params":params}
+			return rtnval;
+		}
 		
 		var where = "http://tmb_rpc.qa.pdone.com/",
 		    search = "search_processor.php",
-		    searchNewsParams = {
-				"mode":"SEARCH",
-				"page":"1",
-				"phrase":"e",
-				"page_length":"100",
-				"type":"news",
-				"callback":"JSON_CALLBACK"
-			},
-		    searchPeopleParams = {
-				"mode":"SEARCH",
-				"page":"1",
-				"phrase":"e",
-				"page_length":"100",
-				"type":"people",
-				"callback":"JSON_CALLBACK"
-			},
-			newsResultsHttp = {
-				method: "jsonp",
-				responseType: "text",
-				params : searchNewsParams,
-				timeout : 10000,
-				url : where+search
-			},
-			peopleResultsHttp = {
-				method: "jsonp",
-				responseType: "text",
-				params : searchPeopleParams,
-				timeout : 10000,
-				url : where+search
-			};
+		    searchNewsParams = configParams(1,'e',"news"),
+		    searchPeopleParams = configParams(1,'e',"people"),
+			newsResultsHttp = configHttp(where+search,searchNewsParams),
+			peopleResultsHttp = configHttp(where+search,searchPeopleParams);
 		
-		function searchNewsService( $http, $q ) {
+		function searchNewsService( $http, $q ){
 			return({
 				getResults: function() {
 					return( $http(newsResultsHttp).then( handleSuccess, handleError ) );
 				}
 			});
 		}
-		function searchPeopleService( $http, $q ) {
+		function searchPeopleService( $http, $q ){
 			return({
 				getResults: function() {
 					return( $http(peopleResultsHttp).then( handleSuccess, handleError ) );
 				}
 			});
 		}
-		function handleError( response ) {
+		function handleError( response ){
 			if (
 				! angular.isObject( response.data ) ||
 				! response.data.message
@@ -109,7 +104,7 @@
 			return( $q.reject( response.data.message ) );
 		}
 
-		function handleSuccess( response ) {
+		function handleSuccess( response ){
 			return( response.data );
 		}
 	</script>
