@@ -9,14 +9,14 @@
 		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
 	</form>
 	<hr/>
-	<p><button ng-click="gotoPage('p','F')">&lt;&lt;</button><button ng-click="gotoPage('p','-')">&lt;</button>page #{{people.page}} out of {{people.total_hits / people.page_length | number:0}}<button ng-click="gotoPage('p','+')">&gt;</button><button ng-click="gotoPage('p','L')">&gt;&gt;</button></p>
+	<p><button ng-click="gotoPage('p','F')">&lt;&lt;</button><button ng-click="gotoPage('p','-')">&lt;</button>page #{{people.page | plusone}} out of {{people.total_hits / people.page_length | roundup}}<button ng-click="gotoPage('p','+')">&gt;</button><button ng-click="gotoPage('p','L')">&gt;&gt;</button></p>
 	<ul>
 		<li ng-repeat="person in people.results">
 			{{ person.firstName }} {{ person.lastName }}, {{ person.id }}
 		</li>
 	</ul>
 	<hr/>
-	<p><button ng-click="gotoPage('n','F')">&lt;&lt;</button><button ng-click="gotoPage('n','-')">&lt;</button>page #{{news.page}} out of {{news.total_hits / news.page_length | number:0}}<button ng-click="gotoPage('n','+')">&gt;</button><button ng-click="gotoPage('n','L')">&gt;&gt;</button></p>
+	<p><button ng-click="gotoPage('n','F')">&lt;&lt;</button><button ng-click="gotoPage('n','-')">&lt;</button>page #{{news.page | plusone}} out of {{news.total_hits / news.page_length | roundup}}<button ng-click="gotoPage('n','+')">&gt;</button><button ng-click="gotoPage('n','L')">&gt;&gt;</button></p>
 	<ul>
 		<li ng-repeat="story in news.results">
 			{{ story.desc }}
@@ -29,12 +29,11 @@
 	<script type="text/javascript">
 		var where = "http://tmb_rpc.prod.pdone.com/",
 		    search = "search_processor.php",
-		    pgnumP = 1, pgnumN = 1,
 		    srchfor = "",
 		    searchParams = {
 		    	"news" : {
 					"mode":"SEARCH",
-					"page":pgnumN,
+					"page":0,
 					"phrase":srchfor,
 					"page_length":"100",
 					"type":"news",
@@ -42,7 +41,7 @@
 				},
 				"people" : {
 					"mode":"SEARCH",
-					"page":pgnumP,
+					"page":0,
 					"phrase":srchfor,
 					"page_length":"100",
 					"type":"people",
@@ -69,26 +68,29 @@
 
 		var app = angular.module( "Search", [] )
 			.controller("searchButtonController",searchButtonController)
-			.service("searchService",searchService);
+			.service("searchService",searchService)
+			.filter('roundup', roundup)
+			.filter('plusone',plusone);
 		
 		function searchButtonController($scope, searchService){
 			$scope.gotoPage = function(x,y){
 				var what = {"p":"people","n":"news"},
 				    decodex = what[x],
 					oldpagenum = searchParams[decodex].page,
-					newpagenum = 1;
+					newpagenum = 0,
+					max = Math.floor($scope[decodex].total_hits / $scope[decodex].page_length);
 				switch(y){
 					case "F":
-						 newpagenum = 1;
+						 newpagenum = 0;
 					break;
 					case "-":
-						newpagenum = oldpagenum - 1;
+						newpagenum = (oldpagenum > 0) ? oldpagenum - 1 : 0;
 					break;
 					case "+":
-						newpagenum = oldpagenum + 1;
+						newpagenum = (oldpagenum < max) ? oldpagenum + 1 : max;
 					break;
 					case "L":
-						newpagenum = Math.ceil($scope[decodex].total_hits / $scope[decodex].page_length) - 1;
+						newpagenum = max;
 					break;
 				}
 				searchParams[decodex].page = newpagenum;
@@ -133,6 +135,24 @@
 		function handleSuccess( response ) {
 			return( response.data );
 		}
+		
+		function roundown() {
+		  return function(input) {
+			return Math.floor(input);
+		  };
+		};
+		
+		function roundup() {
+		  return function(input) {
+			return Math.ceil(input);
+		  };
+		};
+
+		function plusone() {
+		  return function(input) {
+			return parseInt(input,10) + 1;
+		  };
+		};
 		
 		angular.module('Search').directive('ngEnter', function() {
 			return function(scope, element, attrs) {
