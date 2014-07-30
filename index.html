@@ -73,11 +73,11 @@
 
 		angular.forEach(config,function(level1v,level1k){
 			searchParams[level1k] = angular.copy(searchConfig);
+			resultsHttp[level1k]  = angular.copy(resultsConfig);
 			angular.forEach(level1v,function(level2v,level2k){
 				searchParams[level1k][level2k] = level2v;
-				resultsHttp[level1k] = angular.copy(resultsConfig);
-				resultsHttp[level1k]["params"] = searchParams[level1k];			
-			})
+			});
+			resultsHttp[level1k]["params"] = searchParams[level1k];			
 		})
 
 
