@@ -2,21 +2,29 @@
 <html ng-app="Search">
 <head>
 	<meta charset="utf-8" />
-	<title>PDOne Search Service</title>
+	<title>Search Service</title>
+	<style>
+	h1{font-size:16px;}
+	h2{font-size:14px;}
+	ul li, button, span{font:normal normal normal 12px/12px Arial;}
+	</style>
 </head>
 <body ng-controller="searchButtonController">
+	<h1>Search Page</h1>
 	<form>
 		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
 	</form>
 	<hr/>
-	<p><button ng-click="gotoPage('p','F')">&lt;&lt;</button><button ng-click="gotoPage('p','-')">&lt;</button>page #{{people.page | plusone}} out of {{people.total_hits / people.page_length | roundup}}<button ng-click="gotoPage('p','+')">&gt;</button><button ng-click="gotoPage('p','L')">&gt;&gt;</button></p>
+	<h2>People search results<span ng-if="people.total_hits > 0"> ({{people.total_hits}} people found)</span></h2>
+	<p ng-if="people.page_length < people.total_hits"><button ng-click="gotoPage('p','F')">&lt;&lt;</button><button ng-click="gotoPage('p','-')">&lt;</button><span>page #{{people.page | plusone}} out of {{people.total_hits / people.page_length | roundup}}</span><button ng-click="gotoPage('p','+')">&gt;</button><button ng-click="gotoPage('p','L')">&gt;&gt;</button></p>
 	<ul>
 		<li ng-repeat="person in people.results">
 			{{ person.firstName }} {{ person.lastName }}, {{ person.id }}
 		</li>
 	</ul>
 	<hr/>
-	<p><button ng-click="gotoPage('n','F')">&lt;&lt;</button><button ng-click="gotoPage('n','-')">&lt;</button>page #{{news.page | plusone}} out of {{news.total_hits / news.page_length | roundup}}<button ng-click="gotoPage('n','+')">&gt;</button><button ng-click="gotoPage('n','L')">&gt;&gt;</button></p>
+	<h2>News search results<span ng-if="news.total_hits > 0"> ({{news.total_hits}} stories found)</span></h2>
+	<p ng-if="news.page_length < news.total_hits"><button ng-click="gotoPage('n','F')">&lt;&lt;</button><button ng-click="gotoPage('n','-')">&lt;</button><span>page #{{news.page | plusone}} out of {{news.total_hits / news.page_length | roundup}}</span><button ng-click="gotoPage('n','+')">&gt;</button><button ng-click="gotoPage('n','L')">&gt;&gt;</button></p>
 	<ul>
 		<li ng-repeat="story in news.results">
 			{{ story.desc }}
@@ -27,55 +35,67 @@
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
     <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 	<script type="text/javascript">
+
+	
+/* define variables to configure the app */
+
 		var where = "http://tmb_rpc.prod.pdone.com/",
 		    search = "search_processor.php",
-		    srchfor = "",
-		    searchParams = {
+		    config = {
 		    	"news" : {
-					"mode":"SEARCH",
-					"page":0,
-					"phrase":srchfor,
-					"page_length":"100",
-					"type":"news",
-					"callback":"JSON_CALLBACK"
-				},
+		    		"type":"news"
+		    	},
 				"people" : {
+					"type":"people"
+				},
+				"buttons" : {"p":"people","n":"news"}
+		    },
+		    searchParams = {},
+		    searchConfig = {
 					"mode":"SEARCH",
 					"page":0,
-					"phrase":srchfor,
+					"phrase":"",
 					"page_length":"100",
-					"type":"people",
+					"type":"?",
 					"callback":"JSON_CALLBACK"
-				}
 			},
-			resultsHttp = {
-				"news" : {
+			resultsHttp = {},
+			resultsConfig = {
 					method: "jsonp",
 					responseType: "text",
-					params : searchParams.news,
+					params : "?",
 					timeout : 10000,
 					url : where+search
-				},
-				"people" : {
-					method: "jsonp",
-					responseType: "text",
-					params : searchParams.people,
-					timeout : 10000,
-					url : where+search
-				}
 			};
 
 
-		var app = angular.module( "Search", [] )
-			.controller("searchButtonController",searchButtonController)
-			.service("searchService",searchService)
-			.filter('roundup', roundup)
-			.filter('plusone',plusone);
-		
+/* use config to set up http */
+
+		angular.forEach(config,function(level1v,level1k){
+			searchParams[level1k] = angular.copy(searchConfig);
+			angular.forEach(level1v,function(level2v,level2k){
+				searchParams[level1k][level2k] = level2v;
+				resultsHttp[level1k] = angular.copy(resultsConfig);
+				resultsHttp[level1k]["params"] = searchParams[level1k];			
+			})
+		})
+
+
+/* define the app */
+
+		var app = angular.module("Search",[])
+						 .controller("searchButtonController",searchButtonController)
+						 .service("searchService",searchService)
+						 .filter('roundup', roundup)
+						 .filter('plusone',plusone)
+						 .directive('ngEnter', enterbutton);
+
+
+/* define controllers */
+
 		function searchButtonController($scope, searchService){
 			$scope.gotoPage = function(x,y){
-				var what = {"p":"people","n":"news"},
-				    decodex = what[x],
+				var decodex = config.buttons[x],
 					oldpagenum = searchParams[decodex].page,
 					newpagenum = 0,
 					max = Math.floor($scope[decodex].total_hits / $scope[decodex].page_length);
@@ -97,13 +117,18 @@
 				doSearchX($scope, searchService, decodex);
 			}
 			$scope.doSearch = function(){
-				doSearchX($scope, searchService, "news");
-				doSearchX($scope, searchService, "people");
+				angular.forEach(config.buttons,function(level1v,level1k){
+					doSearchX($scope, searchService, level1v);
+				});
 			}
 		}
+		
+
+/* define the search function */
+
 		function doSearchX($scope, searchService, what){
 			searchParams[what].phrase = $scope.phrase;
-			
+
 			$scope[what] = [];
 			searchService.getsearch(what)
 				.then(
@@ -112,7 +137,10 @@
 					}
 				);
 		}
-			
+
+
+/* define services functions */
+
 		function searchService( $http, $q ) {
 			return({
 				getsearch: function(what) {
@@ -120,6 +148,9 @@
 				}
 			});
 		}
+
+
+/* define services handlers */
 
 		function handleError( response ) {
 			if (
@@ -131,42 +162,44 @@
 
 			return( $q.reject( response.data.message ) );
 		}
-
 		function handleSuccess( response ) {
 			return( response.data );
 		}
-		
+
+
+/* define filters */
+
 		function roundown() {
 		  return function(input) {
 			return Math.floor(input);
 		  };
 		};
-		
 		function roundup() {
 		  return function(input) {
 			return Math.ceil(input);
 		  };
 		};
-
 		function plusone() {
 		  return function(input) {
 			return parseInt(input,10) + 1;
 		  };
 		};
-		
-		angular.module('Search').directive('ngEnter', function() {
+
+
+/* define directives */
+
+		function enterbutton(){
 			return function(scope, element, attrs) {
 				element.bind("keydown keypress", function(event) {
 					if(event.which === 13) {
 						scope.$apply(function(){
 							scope.$eval(attrs.ngEnter, {'event': event});
 						});
-	
 						event.preventDefault();
 					}
 				});
 			};
-	    });
+		}
 	</script>
 </body>
 </html>
