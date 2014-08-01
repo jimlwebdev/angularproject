@@ -1,5 +1,5 @@
 <!doctype html>
-<html ng-app="Search">
+<html ng-app="search">
 <head>
 	<meta charset="utf-8" />
 	<title>Search Service</title>
@@ -33,7 +33,6 @@
 	<hr/>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
-    <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 	<script type="text/javascript">
 
 	
@@ -83,7 +82,7 @@
 
 /* define the app */
 
-		var app = angular.module("Search",[])
+		var app = angular.module("search",[])
 						 .controller("searchButtonController",searchButtonController)
 						 .service("searchService",searchService)
 						 .filter('roundup', roundup)
@@ -95,29 +94,14 @@
 
 		function searchButtonController($scope, searchService){
 			$scope.gotoPage = function(x,y){
-				var decodex = config.buttons[x],
-					oldpagenum = searchParams[decodex].page,
-					newpagenum = 0,
-					max = Math.floor($scope[decodex].total_hits / $scope[decodex].page_length);
-				switch(y){
-					case "F":
-						 newpagenum = 0;
-					break;
-					case "-":
-						newpagenum = (oldpagenum > 0) ? oldpagenum - 1 : 0;
-					break;
-					case "+":
-						newpagenum = (oldpagenum < max) ? oldpagenum + 1 : max;
-					break;
-					case "L":
-						newpagenum = max;
-					break;
-				}
+				var newpagenum = findNewPgNum(x,y,$scope),
+				    decodex = config.buttons[x];
 				searchParams[decodex].page = newpagenum;
 				doSearchX($scope, searchService, decodex);
 			}
 			$scope.doSearch = function(){
 				angular.forEach(config.buttons,function(level1v,level1k){
+					searchParams[level1v].phrase = $scope.phrase;
 					doSearchX($scope, searchService, level1v);
 				});
 			}
@@ -127,9 +111,6 @@
 /* define the search function */
 
 		function doSearchX($scope, searchService, what){
-			searchParams[what].phrase = $scope.phrase;
-
-			$scope[what] = [];
 			searchService.getsearch(what)
 				.then(
 					function(results) {
@@ -188,6 +169,28 @@
 
 /* define directives */
 
+		function findNewPgNum(x,y,$scope){
+			var decodex = config.buttons[x],
+				oldpagenum = searchParams[decodex].page,
+				newpagenum = 0,
+				max = Math.floor($scope[decodex].total_hits / $scope[decodex].page_length);
+			switch(y){
+				case "F":
+					 newpagenum = 0;
+				break;
+				case "-":
+					newpagenum = (oldpagenum > 0) ? oldpagenum - 1 : 0;
+				break;
+				case "+":
+					newpagenum = (oldpagenum < max) ? oldpagenum + 1 : max;
+				break;
+				case "L":
+					newpagenum = max;
+				break;
+			}
+			return newpagenum;
+		}
+		
 		function enterbutton(){
 			return function(scope, element, attrs) {
 				element.bind("keydown keypress", function(event) {
