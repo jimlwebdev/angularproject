@@ -2,88 +2,71 @@
 <html ng-app="Search">
 <head>
 	<meta charset="utf-8" />
-	<title>TMB Search Service</title>
+	<title>PDOne Search Service</title>
 </head>
 <body ng-controller="searchButtonController">
 	<form>
 		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
 	</form>
+	<hr/>
+	<p>page #{{people.page}} out of {{people.total_hits / people.page_length | number:0}}</p>
 	<ul>
-		<li ng-repeat="person in people.articles">
-			{{ person.title }}
+		<li ng-repeat="person in people.results">
+			{{ person.firstName }} {{ person.lastName }}, {{ person.id }}
 		</li>
 	</ul>
+	<hr/>
+	<p>page #{{news.page}} out of {{news.total_hits / news.page_length | number:0}}</p>
 	<ul>
-		<li ng-repeat="story in news.articles">
-			{{ story.title }}
+		<li ng-repeat="story in news.results">
+			{{ story.desc }}
 		</li>
 	</ul>
-	<ul>
-		<li ng-repeat="blog in drblog.articles">
-			{{ blog.title }}
-		</li>
-	</ul>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.js"></script>
+	<hr/>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
     <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 	<script type="text/javascript">
-		var where = "http://tmb_rpc.dev.stg1.pdone.com/",
-		    search = "elastica_search_processor.php",
-		    pgnum = 0,
+/*
+"page":"1","page_length":"100","total_hits":51808,"revised_keyword_list":"e","type":"news"
+"page":"1","page_length":"100","total_hits":9575,"revised_keyword_list":"e","type":"people"
+*/
+		var where = "http://tmb_rpc.prod.pdone.com/",
+		    search = "search_processor.php",
+		    pgnum = 1,
 		    srchfor = "",
 		    searchParams = {
 		    	"news" : {
-					"mode":"search",
-					"word":srchfor,
-					"index":"articles",
-					"type":"article",
-					"from":pgnum,
-					"limit":"5",
-					"channel_id":"",
+					"mode":"SEARCH",
+					"page":pgnum,
+					"phrase":srchfor,
+					"page_length":"100",
+					"type":"news",
 					"callback":"JSON_CALLBACK"
 				},
 				"people" : {
-					"mode":"search",
-					"word":srchfor,
-					"index":"articles",
-					"type":"specialty",
-					"from":pgnum,
-					"limit":"5",
-					"channel_id":"",
-					"callback":"JSON_CALLBACK"
-				},
-				"drblog" : {
-					"mode":"search",
-					"word":srchfor,
-					"index":"articles",
-					"type":"dr_blog",
-					"from":pgnum,
-					"limit":"5",
-					"channel_id":"",
+					"mode":"SEARCH",
+					"page":pgnum,
+					"phrase":srchfor,
+					"page_length":"100",
+					"type":"people",
 					"callback":"JSON_CALLBACK"
 				}
 			},
 			resultsHttp = {
 				"news" : {
-					"method" : "jsonp",
-					"responseType" : "json",
-					"params" : searchParams.news,
-					"timeout" : 10000,
-					"url" : where+search
+					method: "jsonp",
+					responseType: "text",
+					params : searchParams.news,
+					timeout : 10000,
+					url : where+search
 				},
 				"people" : {
-					"method" : "jsonp",
-					"responseType" : "json",
-					"params" : searchParams.people,
-					"timeout" : 10000,
-					"url" : where+search
-				},
-				"drblog" : {
-					"method" : "jsonp",
-					"responseType" : "json",
-					"params" : searchParams.drblog,
-					"timeout" : 10000,
-					"url" : where+search
+					method: "jsonp",
+					responseType: "text",
+					params : searchParams.people,
+					timeout : 10000,
+					url : where+search
 				}
 			};
 
@@ -91,16 +74,38 @@
 		var app = angular.module( "Search", [] )
 			.controller("searchButtonController",searchButtonController)
 			.service("searchService",searchService);
-		
+			
+			
 		function searchButtonController($scope, searchService){
+		
 			$scope.doSearch = function(){
 				doSearchX($scope, searchService, "news");
 				doSearchX($scope, searchService, "people");
-				doSearchX($scope, searchService, "drblog");
 			}
+
+			$scope.gotoPage = function(){
+				searchNewsParams.page = $scope.pagenum;
+				searchPeopleParams.page = $scope.pagenum;
+				
+				$scope.news = [];
+				searchService.getNews()
+					.then(
+						function( results ) {
+							$scope.news = results.results;
+						}
+					);
+				$scope.people = [];
+				searchService.getPeople()
+					.then(
+						function( results ) {
+							$scope.people = results.results;
+						}
+					);
+			}
+
 		}
 		function doSearchX($scope, searchService, what){
-			searchParams[what].word = $scope.phrase;
+			searchParams[what].phrase = $scope.phrase;
 			
 			$scope[what] = [];
 			searchService.getsearch(what)
@@ -133,7 +138,7 @@
 		function handleSuccess( response ) {
 			return( response.data );
 		}
-				
+		
 		angular.module('Search').directive('ngEnter', function() {
 			return function(scope, element, attrs) {
 				element.bind("keydown keypress", function(event) {
