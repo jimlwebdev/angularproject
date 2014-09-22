@@ -1,0 +1,23 @@
+	<form>
+		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
+		<br/>
+		<input type="text" placeholder="filter" ng-model="filterfld">
+		<input type="radio" ng-model="filtertype" value="date" name="filtertype" ng-change="doReset()"/> date
+		<input type="radio" ng-model="filtertype" value="title" name="filtertype" ng-change="doReset()"/> title
+	</form>
+	<h2>search count = {{people.count + news.count + blog.count}}</h2>
+	<ul>
+		<li ng-repeat="person in people.articles | newsFilter:filtertype:filterfld">
+			{{ person.title }} : {{person.date}}
+		</li>
+	</ul>
+	<ul>
+		<li ng-repeat="story in news.articles | newsFilter:[filtertype,filterfld]">
+			{{ story.title }} : {{story.date}}
+		</li>
+	</ul>
+	<ul>
+		<li ng-repeat="blog in drblog.articles | newsFilter:[filtertype,filterfld]">
+			{{ blog.title }} : {{blog.date}}
+		</li>
+	</ul>

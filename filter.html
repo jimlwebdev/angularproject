@@ -1,0 +1,155 @@
+<!doctype html>
+<html ng-app="Search">
+<head>
+	<meta charset="utf-8" />
+	<title>TMB Search Service</title>
+</head>
+<body ng-controller="searchButtonController">
+	<form>
+		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
+		<br/>
+		<input type="search" placeholder="filter" ng-model="filterfld">
+	</form>
+	<ul>
+		<li ng-repeat="person in people.articles | filter:{title:filterfld}">
+			{{ person.title }}
+		</li>
+	</ul>
+	<ul>
+		<li ng-repeat="story in news.articles | filter:{title:filterfld}">
+			{{ story.title }}
+		</li>
+	</ul>
+	<ul>
+		<li ng-repeat="blog in drblog.articles | filter:{title:filterfld}">
+			{{ blog.title }}
+		</li>
+	</ul>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular-filter/0.1.1/angular-filter.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript">
+		var where = "http://tmb_rpc.dev.stg1.pdone.com/",
+		    search = "elastica_search_processor.php",
+		    pgnum = 0,
+		    srchfor = "",
+		    searchParams = {
+		    	"news" : {
+					"mode":"search",
+					"word":srchfor,
+					"index":"articles",
+					"type":"article",
+					"from":pgnum,
+					"limit":"5",
+					"channel_id":"",
+					"callback":"JSON_CALLBACK"
+				},
+				"people" : {
+					"mode":"search",
+					"word":srchfor,
+					"index":"articles",
+					"type":"specialty",
+					"from":pgnum,
+					"limit":"5",
+					"channel_id":"",
+					"callback":"JSON_CALLBACK"
+				},
+				"drblog" : {
+					"mode":"search",
+					"word":srchfor,
+					"index":"articles",
+					"type":"dr_blog",
+					"from":pgnum,
+					"limit":"5",
+					"channel_id":"",
+					"callback":"JSON_CALLBACK"
+				}
+			},
+			resultsHttp = {
+				"news" : {
+					"method" : "jsonp",
+					"responseType" : "json",
+					"params" : searchParams.news,
+					"timeout" : 10000,
+					"url" : where+search
+				},
+				"people" : {
+					"method" : "jsonp",
+					"responseType" : "json",
+					"params" : searchParams.people,
+					"timeout" : 10000,
+					"url" : where+search
+				},
+				"drblog" : {
+					"method" : "jsonp",
+					"responseType" : "json",
+					"params" : searchParams.drblog,
+					"timeout" : 10000,
+					"url" : where+search
+				}
+			};
+
+
+		var app = angular.module( "Search", ['angular.filter'] )
+			.controller("searchButtonController",searchButtonController)
+			.service("searchService",searchService);
+		
+		function searchButtonController($scope, searchService){
+			$scope.doSearch = function(){
+				doSearchX($scope, searchService, "news");
+				doSearchX($scope, searchService, "people");
+				doSearchX($scope, searchService, "drblog");
+			}
+		}
+		function doSearchX($scope, searchService, what){
+			searchParams[what].word = $scope.phrase;
+			
+			$scope[what] = [];
+			searchService.getsearch(what)
+				.then(
+					function(results) {
+						$scope[what] = results;
+					}
+				);
+		}
+			
+		function searchService( $http, $q ) {
+			return({
+				getsearch: function(what) {
+					return( $http(resultsHttp[what]).then( handleSuccess, handleError ) );
+				}
+			});
+		}
+
+		function handleError( response ) {
+			if (
+				! angular.isObject( response.data ) ||
+				! response.data.message
+				) {
+				return( $q.reject( "An unknown error occurred." ) );
+			}
+
+			return( $q.reject( response.data.message ) );
+		}
+
+		function handleSuccess( response ) {
+			return( response.data );
+		}
+				
+		angular.module('Search').directive('ngEnter', function() {
+			return function(scope, element, attrs) {
+				element.bind("keydown keypress", function(event) {
+					if(event.which === 13) {
+						scope.$apply(function(){
+							scope.$eval(attrs.ngEnter, {'event': event});
+						});
+	
+						event.preventDefault();
+					}
+				});
+			};
+	    });
+	</script>
+</body>
+</html>
