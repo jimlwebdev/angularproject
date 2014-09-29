@@ -1,3 +1,6 @@
+<my-header></my-header>
+<div style="height:60px"></div>
+<main>
 	<form>
 		<input type="text" ng-model="phrase" value="" ng-enter="doSearch()"/><button type="button" ng-click="doSearch()">search</button>
 		<br/>
@@ -12,12 +15,14 @@
 		</li>
 	</ul>
 	<ul>
-		<li ng-repeat="story in news.articles | newsFilter:[filtertype,filterfld]">
+		<li ng-repeat="story in news.articles | newsFilters:[filtertype,filterfld]">
 			{{ story.title }} : {{story.date}}
 		</li>
 	</ul>
 	<ul>
-		<li ng-repeat="blog in drblog.articles | newsFilter:[filtertype,filterfld]">
+		<li ng-repeat="blog in drblog.articles | newsFilters:[filtertype,filterfld]">
 			{{ blog.title }} : {{blog.date}}
 		</li>
 	</ul>
+</main>
+<my-footer></my-footer>

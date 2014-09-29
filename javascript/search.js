@@ -51,6 +51,8 @@
 
 		var app = angular.module( "Search", ['ngRoute','angular.filter'] )
 			.controller("searchButtonController",searchButtonController)
+			.directive("myHeader",myHeader)
+			.directive("myFooter",myFooter)
 			.service("searchService",searchService)
 			.filter("newsFilter",["$filter", newsFilter])
 			.filter("newsFilters",["$filter", newsFilters])
@@ -62,6 +64,19 @@
 				controller: "searchButtonController"
 			});
 		}
+		
+		function myHeader(){
+			return {
+				  restrict: 'E',
+				  templateUrl: 'views/header.html'
+				};
+		}
+		function myFooter(){
+			return {
+				  restrict: 'E',
+				  templateUrl: 'views/footer.html'
+				};
+		}
 		function newsFilter($filter){
 		  return function (array, key, value) {
 			var obj = {};
@@ -71,8 +86,8 @@
 		}
 		function newsFilters($filter){
 		  return function (array, keyValuePairs) {
-			var obj = {}, i;
-			for (i = 0; i < keyValuePairs.length; i += 2) {
+			var obj={}, i=0;
+			for (var i=0;i<keyValuePairs.length;i+=2) {
 				if (keyValuePairs[i] && keyValuePairs[i+1]) {
 					obj[keyValuePairs[i]] = keyValuePairs[i+1];
 				}
