@@ -9,7 +9,7 @@
 					"index":"articles",
 					"type":"",
 					"from":pgnum,
-					"limit":"25",
+					"limit":"99",
 					"channel_id":"",
 					"callback":"JSON_CALLBACK"
 				},

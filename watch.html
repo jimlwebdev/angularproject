@@ -8,12 +8,13 @@
 	
 	var app = angular.module( "watching", [] );
 		app.controller("watchController",AppController);
-		app.directive("enterMyName",enterMyName)
+		app.directive("showMyName",showMyName)
 		
 	function AppController($scope) {
 		$scope.name = '';
 	}
-	function enterMyName(){
+	
+	function showMyName(){
 		return {
 			restrict: 'E',
 			template: '<input type="text" ng-model="name" placeholder="Enter your name">',
@@ -32,7 +33,7 @@
 </head>
 <body>
 <div ng-controller="watchController">
-	<enter-my-name></enter-my-name>
+	<show-my-name></show-my-name>
 	<p>{{greeting}}</p>
 </div>
 </body>

@@ -8,21 +8,22 @@
 		<input type="radio" ng-model="filtertype" value="date" name="filtertype" ng-change="doReset()"/> date
 		<input type="radio" ng-model="filtertype" value="title" name="filtertype" ng-change="doReset()"/> title
 	</form>
-	<h2>search count = {{people.count + news.count + blog.count}}</h2>
+	<h2>search count = {{people.count + news.count + drblog.count}}</h2>
 	<ul>
 		<li ng-repeat="person in people.articles | newsFilter:filtertype:filterfld">
-			{{ person.title }} : {{person.date}}
+			{{ person.title }} : {{person.date}} 
 		</li>
 	</ul>
 	<ul>
 		<li ng-repeat="story in news.articles | newsFilters:[filtertype,filterfld]">
-			{{ story.title }} : {{story.date}}
+			{{ story.title }} : {{story.date}} 
 		</li>
 	</ul>
 	<ul>
 		<li ng-repeat="blog in drblog.articles | newsFilters:[filtertype,filterfld]">
-			{{ blog.title }} : {{blog.date}}
+			{{ blog.title }} : {{blog.date}} 
 		</li>
 	</ul>
 </main>
+<div style="height:60px"></div>
 <my-footer></my-footer>
