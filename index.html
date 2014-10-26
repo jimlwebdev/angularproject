@@ -1,39 +1,26 @@
 <!doctype html>
-<html ng-app="watching">
+<html ng-app="Search">
 <head>
 	<meta charset="utf-8" />
-	<title>watching</title>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.js"></script>
-	<script>
-	
-	var app = angular.module( "watching", [] );
-		app.controller("watchController",AppController);
-		app.directive("enterMyName",enterMyName)
-		
-	function AppController($scope) {
-		$scope.name = '';
-	}
-	function enterMyName(){
-		return {
-			restrict: 'E',
-			template: '<input type="text" ng-model="name" placeholder="Enter your name">',
-			link: updateGreeting
+	<title>TMB Filter Service</title>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/normalize/3.0.1/normalize.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap.min.css"/>
+	<style>
+		.footer {
+		  position: fixed;
+		  bottom: 0;
+		  width: 100%;
+		  /* Set the fixed height of the footer here */
+		  height: 60px;
+		  background-color: #f5f5f5;
 		}
-	}
-	
-	function updateGreeting(scope, element, attrs) {
-		scope.$watch("name",
-			function(newValue, oldValue) {
-				scope.greeting = "Greetings " + scope.name;
-			}
-		,true);
-	}
-	</script>
+	</style>
 </head>
-<body>
-<div ng-controller="watchController">
-	<enter-my-name></enter-my-name>
-	<p>{{greeting}}</p>
-</div>
+<body ng-controller="searchButtonController">
+	<div ng-view></div>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular-filter/0.1.1/angular-filter.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
+	<script src="javascript/search.js"></script>
 </body>
 </html>

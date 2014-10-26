@@ -54,6 +54,8 @@
 			.directive("myHeader",myHeader)
 			.directive("myFooter",myFooter)
 			.service("searchService",searchService)
+			.factory("searchFactory",searchFactory)
+			.service("searchFactoryService",searchFactoryService)
 			.filter("newsFilter",["$filter", newsFilter])
 			.filter("newsFilters",["$filter", newsFilters])
 			.config(configRoutes);
@@ -64,6 +66,19 @@
 				controller: "searchButtonController"
 			});
 		}
+
+		function configRoutesX($routeProvider){
+			$routeProvider.when("/",{
+				templateUrl: "views/search.html",
+				controller: "searchButtonController",
+				resolve: {
+					searchResults: ['$route', 'searchService', function ($route, searchService) {
+						return searchService.getsearch($route.current.params);
+					}]
+				}
+			});
+		}
+		
 		
 		function myHeader(){
 			return {
@@ -96,11 +111,11 @@
 		  }
 		}
 //angularjs filter dynamic expression			
-		function searchButtonController($scope, searchService){
+		function searchButtonController($scope, searchFactory){
 			$scope.doSearch = function(){
-				doSearchX($scope, searchService, "news");
-				doSearchX($scope, searchService, "people");
-				doSearchX($scope, searchService, "drblog");
+				doSearchX($scope, searchFactory, "news");
+				doSearchX($scope, searchFactory, "people");
+				doSearchX($scope, searchFactory, "drblog");
 			}
 			$scope.doReset = function(){
 				$scope.filterfld = "";
@@ -110,19 +125,35 @@
 			$scope.filtertype = "title";
 		}
 		
-		function doSearchX($scope, searchService, what){
-			searchParams[what].word = $scope.phrase;
+		function doSearchX(scope, searchFactory, what){
+			searchParams[what].word = scope.phrase;
 			
-			$scope[what] = [];
-			searchService.getsearch(what)
+			scope[what] = [];
+			searchFactory.getsearch(what)
 				.then(
 					function(results) {
-						$scope[what] = results;
+						scope[what] = results;
 					}
 				);
 		}
-			
-		function searchService( $http, $q ) {
+
+//http://viralpatel.net/blogs/angularjs-service-factory-tutorial/
+		function searchFactory( $http ) {
+			var factory = {
+				getsearch : function(what) {
+				 return( $http(resultsHttp[what]).then( handleSuccess, handleError ) );
+				}
+			}; 
+			return factory;
+		}
+
+		function searchService( $http ) {
+			this.getsearch = function(what) {
+				return( $http(resultsHttp[what]).then( handleSuccess, handleError ) );
+			}
+		}
+		
+		function searchFactoryService( $http ) {
 			return({
 				getsearch: function(what) {
 					return( $http(resultsHttp[what]).then( handleSuccess, handleError ) );

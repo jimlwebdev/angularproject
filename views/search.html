@@ -9,16 +9,19 @@
 		<input type="radio" ng-model="filtertype" value="title" name="filtertype" ng-change="doReset()"/> title
 	</form>
 	<h2>search count = {{people.count + news.count + drblog.count}}</h2>
+	{{people.count}}
 	<ul>
 		<li ng-repeat="person in people.articles | newsFilter:filtertype:filterfld">
 			{{ person.title }} : {{person.date}} 
 		</li>
 	</ul>
+	{{news.count}}
 	<ul>
 		<li ng-repeat="story in news.articles | newsFilters:[filtertype,filterfld]">
 			{{ story.title }} : {{story.date}} 
 		</li>
 	</ul>
+	{{drblog.count}}
 	<ul>
 		<li ng-repeat="blog in drblog.articles | newsFilters:[filtertype,filterfld]">
 			{{ blog.title }} : {{blog.date}} 

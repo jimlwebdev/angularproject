@@ -1,0 +1,60 @@
+<!doctype html>
+<html ng-app="howtall">
+<head>
+	<meta charset="utf-8" />
+	<title>howtall</title>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular-route.js"></script>
+	<script>
+	
+	var app = angular.module( "howtall", ['ngRoute'] );
+		app.controller("watchController",AppController);
+		app.directive("enterMyName",enterMyName);
+		app.config(configRoutes);
+		app.factory('factoryWatch', factoryWatch);
+
+	function configRoutes($routeProvider){
+		$routeProvider.when("/",{
+			templateUrl: "views/watch.html"
+		});
+	}
+	function AppController($scope,factoryWatch) {
+		$scope.name = '';
+		$scope.$on('$routeChangeSuccess',howtall);
+	}
+	
+	function howtall() {
+		alert('howtall');
+	}
+	
+	function enterMyName(){
+		return {
+			restrict: 'E',
+			template: '<input type="text" ng-model="name" placeholder="Enter your name">',
+			link: updateGreeting
+		}
+	}
+	
+	function updateGreeting(scope, element, attrs) {
+		scope.$watch("name",
+			function(newValue, oldValue) {
+				scope.greeting = "Greetings " + scope.name;
+			}
+		,true);
+	}
+		
+	function factoryWatch() {
+		return {
+		  greet: function(newValue, oldValue) {
+			$window.alert(text);
+		  }
+		};
+	}
+	</script>
+</head>
+<body>
+<div ng-controller="watchController">
+	<div ng-view></div>
+</div>
+</body>
+</html>
